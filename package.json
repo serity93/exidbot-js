@@ -1,0 +1,13 @@
+{
+  "name": "exidbot-js",
+  "author": "Sean Tyler (@serity93)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ."
+  },
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0",
+    "eslint": "^7.20.0"
+  }
+}
