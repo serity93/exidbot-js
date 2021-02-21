@@ -1,3 +1,5 @@
+const { roles: serverRoles } = require('./serverConstants');
+
 module.exports = {
   messageHasCorrectNumArgs: (command, args) => {
     if (!command.numArgs) 
@@ -22,6 +24,6 @@ module.exports = {
     return false;
   },
   memberIsBlacklisted: (member) => {
-    return member.roles.cache.some((role) => role.name === 'Blacklist');
+    return member.roles.cache.some((role) => role.name === serverRoles.blacklist.name);
   },
 };
