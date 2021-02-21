@@ -16,7 +16,7 @@ module.exports = {
       return true;
 
     for (const commandRole of command.roles) {
-      if (member.roles.cache.some((role) => role.name === commandRole)){
+      if (member.roles.cache.some((role) => role.name === commandRole.name)){
         return true;
       }
     }

@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const { prefix } = require('./config/bot-config.json');
-const commandUtils = require('./utils/commandUtils');
+const commandUtils = require('./utils/command-utils');
 
 /*
 A Discord bot written specifically for the EXID Discord server.
