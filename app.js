@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const { prefix } = require('./config/bot-config.json');
+const { hasCorrectNumArgs } = require('./utils/commandUtils');
 
 /*
 A Discord bot written specifically for the EXID Discord server.
@@ -37,6 +38,18 @@ client.on('message', (message) => {
   if (!client.commands.has(commandName)) return;
 
   const command = client.commands.get(commandName);
+
+  if (command.guildOnly && message.channel.type === 'dm') {
+    return message.reply('Cannot execute that command in DMs!');
+  }
+
+  if (!hasCorrectNumArgs(command, commandArgs)) {
+    let reply = 'Incorrect number of arguments provided!'
+    if (command.usage) {
+      reply += `\nUsage: ${prefix}${command.name} ${command.usage}`;
+    }
+    return message.channel.send(reply);
+  }
 
   try {
     command.execute(message, commandArgs);
