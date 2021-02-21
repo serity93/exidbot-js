@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const { prefix } = require('./config/bot-config.json');
-const { hasCorrectNumArgs } = require('./utils/commandUtils');
+const commandUtils = require('./utils/commandUtils');
 
 /*
 A Discord bot written specifically for the EXID Discord server.
@@ -32,6 +32,10 @@ client.once('ready', () => {
 client.on('message', (message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
+  if (message.channel.type !== 'dm' && commandUtils.memberIsBlacklisted(message.member)) {
+    return message.reply('you have been blacklisted and cannot execute bot commands!');
+  }
+
   const commandArgs = message.content.slice(prefix.length).trim().split(/ +/);
   const commandName = commandArgs.shift().toLowerCase();
 
@@ -43,7 +47,11 @@ client.on('message', (message) => {
     return message.reply('Cannot execute that command in DMs!');
   }
 
-  if (!hasCorrectNumArgs(command, commandArgs)) {
+  if (!commandUtils.memberHasRequiredRole(command, message.member)) {
+    return message.reply('you don\'t have the required role to execute that command!');
+  }
+
+  if (!commandUtils.messageHasCorrectNumArgs(command, commandArgs)) {
     let reply = 'Incorrect number of arguments provided!'
     if (command.usage) {
       reply += `\nUsage: ${prefix}${command.name} ${command.usage}`;
@@ -55,7 +63,7 @@ client.on('message', (message) => {
     command.execute(message, commandArgs);
   } catch (error) {
     console.error(error);
-    message.reply('There was an error trying to execute that command!');
+    return message.reply('there was an error trying to execute that command!');
   }
 });
 
