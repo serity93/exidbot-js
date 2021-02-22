@@ -1,6 +1,7 @@
 const Discord = require('discord.js');
 const dotenv = require('dotenv');
 const fs = require('fs');
+const path = require('path');
 const { prefix } = require('./config/bot-config.json');
 const commandUtils = require('./utils/command-utils');
 
@@ -16,16 +17,24 @@ dotenv.config();
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
 
-const commandFolders = fs.readdirSync('./commands');
-for (const folder of commandFolders) {
-  const commandFiles = fs.readdirSync(`./commands/${folder}`).filter((file) => file.endsWith('.js'));
-  for (const file of commandFiles) {
-    const command = require(`./commands/${folder}/${file}`);
-    client.commands.set(command.name, command);
-  }
-}
-
 client.once('ready', () => {
+  console.log('Loading commands...');
+  const readCommands = (dir) => {
+    const files = fs.readdirSync(path.join(__dirname, dir));
+    for (const file of files) {
+      const stat = fs.lstatSync(path.join(__dirname, dir, file));
+      if (stat.isDirectory()) {
+        readCommands(path.join(dir, file));
+      } else {
+        const command = require(path.join(__dirname, dir, file));
+        console.log(file, command);
+        client.commands.set(command.name, command);
+      }
+    }
+  };
+
+  readCommands('commands');
+
   console.log('Ready!');
 });
 
@@ -33,37 +42,55 @@ client.on('message', (message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
   if (message.channel.type !== 'dm' && commandUtils.memberIsBlacklisted(message.member)) {
-    return message.reply('you have been blacklisted and cannot execute bot commands!');
+    return message.reply('You have been blacklisted and cannot execute bot commands!');
   }
 
   const commandArgs = message.content.slice(prefix.length).trim().split(/ +/);
   const commandName = commandArgs.shift().toLowerCase();
 
+  // TODO: Implement help command and send reply when command not found
   if (!client.commands.has(commandName)) return;
 
-  const command = client.commands.get(commandName);
+  let {
+    name,
+    minNumArgs = 0,
+    maxNumArgs = null,
+    expectedArgs = '',
+    guildOnly = false,
+    requiredRoles = [],
+    execute,
+  } = client.commands.get(commandName);
 
-  if (command.guildOnly && message.channel.type === 'dm') {
+  // Check if command can be executed in DMs
+  if (message.channel.type === 'dm' && (guildOnly || requiredRoles.length)) {
     return message.reply('Cannot execute that command in DMs!');
   }
 
-  if (!commandUtils.memberHasRequiredRole(command, message.member)) {
-    return message.reply('you don\'t have the required role to execute that command!');
+  if (typeof requiredRoles === 'string') {
+    requiredRoles = [requiredRoles];
   }
 
-  if (!commandUtils.messageHasCorrectNumArgs(command, commandArgs)) {
+  // Check if server and member have required roles
+  for (const requiredRole of requiredRoles) {
+    if (!commandUtils.serverHasRequiredRole(message.guild, requiredRole) || !commandUtils.memberHasRequiredRole(message.member, requiredRole)) {
+      return message.reply(`You must have the role "${requiredRole.name}" to use this command!`);
+    }
+  }
+
+  // Check if user provided the correct number of args
+  if (!commandUtils.messageHasCorrectNumArgs(commandArgs, minNumArgs, maxNumArgs)) {
     let reply = 'Incorrect number of arguments provided!'
-    if (command.usage) {
-      reply += `\nUsage: ${prefix}${command.name} ${command.usage}`;
+    if (expectedArgs) {
+      reply += `\nUsage: ${prefix}${name} ${expectedArgs}`;
     }
     return message.channel.send(reply);
   }
 
   try {
-    command.execute(message, commandArgs);
+    execute(message, commandArgs, commandArgs.join(' '));
   } catch (error) {
     console.error(error);
-    return message.reply('there was an error trying to execute that command!');
+    return message.reply('There was an error trying to execute that command!');
   }
 });
 

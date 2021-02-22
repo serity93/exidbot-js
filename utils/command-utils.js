@@ -1,27 +1,14 @@
-const { roles: serverRoles } = require('./serverConstants');
+const { roles: serverRoles } = require('./server-constants');
 
 module.exports = {
-  messageHasCorrectNumArgs: (command, args) => {
-    if (!command.numArgs) 
-      return true;
-
-    if (typeof command.numArgs === 'number') 
-      return args.length === command.numArgs
-
-    if (Array.isArray(command.numArgs)) 
-      return args.length >= command.numArgs[0] && args.length <= command.numArgs[1];
+  messageHasCorrectNumArgs: (args, minNumArgs, maxNumArgs) => {
+    return args.length >= minNumArgs && (maxNumArgs === null || args.length <= maxNumArgs);
   },
-  memberHasRequiredRole: (command, member) => {
-    if (!command.roles)
-      return true;
-
-    for (const commandRole of command.roles) {
-      if (member.roles.cache.some((role) => role.name === commandRole.name)){
-        return true;
-      }
-    }
-
-    return false;
+  serverHasRequiredRole: (guild, requiredRole) => {
+    return guild.roles.cache.some((role) => role.name === requiredRole.name);
+  },
+  memberHasRequiredRole: (member, requiredRole) => {
+    return member.roles.cache.some((role) => role.name === requiredRole.name);
   },
   memberIsBlacklisted: (member) => {
     return member.roles.cache.some((role) => role.name === serverRoles.blacklist.name);
