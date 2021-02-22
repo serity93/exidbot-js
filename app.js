@@ -73,7 +73,7 @@ client.on('message', (message) => {
   // Check if server and member have required roles
   for (const requiredRole of requiredRoles) {
     if (!commandUtils.serverHasRequiredRole(message.guild, requiredRole) || !commandUtils.memberHasRequiredRole(message.member, requiredRole)) {
-      return message.reply(`You must have the role "${requiredRole.name}" to use this command!`);
+      return message.reply(`You must have the role \'${requiredRole.name}\' to use this command!`);
     }
   }
 
