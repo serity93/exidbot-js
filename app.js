@@ -16,6 +16,7 @@ dotenv.config();
 
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
+const cooldowns = new Discord.Collection();
 
 client.once('ready', () => {
   console.log('Loading commands...');
@@ -63,6 +64,7 @@ client.on('message', (message) => {
     expectedArgs = '',
     guildOnly = false,
     requiredRoles = [],
+    cooldown = 2,
     execute,
   } = command;
 
@@ -90,6 +92,26 @@ client.on('message', (message) => {
     }
     return message.channel.send(reply);
   }
+
+  if (!cooldowns.has(name)) {
+    cooldowns.set(name, new Discord.Collection());
+  }
+
+  const currentTime = Date.now();
+  const timestamps = cooldowns.get(name);
+  const cooldownMs = cooldown * 1000;
+
+  if (timestamps.has(message.author.id)) {
+    const expirationTime = timestamps.get(message.author.id) + cooldownMs;
+
+    if (currentTime < expirationTime) {
+      const remainingTime = (expirationTime - currentTime) / 1000;
+      return message.reply(`Please wait ${remainingTime.toFixed(1)} more seconds before using \'${commandName}\' again!`)
+    }
+  }
+
+  timestamps.set(message.author.id, currentTime);
+  setTimeout(() => timestamps.delete(message.author.id), cooldownMs);
 
   try {
     execute(message, commandArgs, commandArgs.join(' '));
