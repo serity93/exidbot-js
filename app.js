@@ -39,8 +39,10 @@ client.once('ready', () => {
 });
 
 client.on('message', (message) => {
+  // Check if message starts with prefix or if the author is a bot
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
+  // Check if the user is blacklisted
   if (message.channel.type !== 'dm' && commandUtils.memberIsBlacklisted(message.member)) {
     return message.reply('You have been blacklisted and cannot execute bot commands!');
   }
@@ -48,8 +50,11 @@ client.on('message', (message) => {
   const commandArgs = message.content.slice(prefix.length).trim().split(/ +/);
   const commandName = commandArgs.shift().toLowerCase();
 
-  // TODO: Implement help command and send reply when command not found
-  if (!client.commands.has(commandName)) return;
+  const command = client.commands.find((c) => c.name.toLowerCase() === commandName) || client.commands.find((c) => c.aliases && c.aliases.map((a) => a.toLowerCase()).includes(commandName));
+
+  if (!command) {
+    return message.channel.send(`The command \'${commandName}\' does not exist! Use \'!help\' to see a list of available commands.`)
+  }
 
   let {
     name,
@@ -59,7 +64,7 @@ client.on('message', (message) => {
     guildOnly = false,
     requiredRoles = [],
     execute,
-  } = client.commands.get(commandName);
+  } = command;
 
   // Check if command can be executed in DMs
   if (message.channel.type === 'dm' && (guildOnly || requiredRoles.length)) {
@@ -81,7 +86,7 @@ client.on('message', (message) => {
   if (!commandUtils.messageHasCorrectNumArgs(commandArgs, minNumArgs, maxNumArgs)) {
     let reply = 'Incorrect number of arguments provided!'
     if (expectedArgs) {
-      reply += `\nUsage: ${prefix}${name} ${expectedArgs}`;
+      reply += `\nUsage: ${prefix}${commandName} ${expectedArgs}`;
     }
     return message.channel.send(reply);
   }

@@ -2,6 +2,7 @@ const { prefix } = require('../../config/bot-config.json');
 
 module.exports = {
   name: 'help',
+  aliases: ['commands'],
   description: 'Lists all of the available commands (filtered by role) or info about a specific command.',
   minNumArgs: 0,
   maxNumArgs: 1,
@@ -23,6 +24,7 @@ module.exports = {
       }
 
       data.push(`Name: ${command.name}`);
+      if (command.aliases) data.push(`Aliases: ${command.aliases.join(', ')}`)
       if (command.description) data.push(`Description: ${command.description}`);
       if (command.usage) data.push(`Usage: ${prefix}${command.name} ${command.expectedArgs}`)
     }
