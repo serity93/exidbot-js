@@ -16,7 +16,7 @@ dotenv.config();
 
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
-const cooldowns = new Discord.Collection();
+client.cooldowns = new Discord.Collection();
 
 client.once('ready', () => {
   console.log('Loading commands...');
@@ -93,12 +93,12 @@ client.on('message', (message) => {
     return message.channel.send(reply);
   }
 
-  if (!cooldowns.has(name)) {
-    cooldowns.set(name, new Discord.Collection());
+  if (!client.cooldowns.has(name)) {
+    client.cooldowns.set(name, new Discord.Collection());
   }
 
   const currentTime = Date.now();
-  const timestamps = cooldowns.get(name);
+  const timestamps = client.cooldowns.get(name);
   const cooldownMs = cooldown * 1000;
 
   if (timestamps.has(message.author.id)) {
